@@ -1,0 +1,208 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单网页示例</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #333;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            color: #ddd;
+        }
+
+        /* 主要内容样式 */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 3rem 0;
+            background-color: #f4f4f4;
+            border-radius: 8px;
+        }
+
+        .hero h1 {
+            margin-bottom: 1rem;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        .button:hover {
+            background-color: #555;
+        }
+
+        /* NCM转换器样式 */
+        .ncm-converter {
+            margin: 2rem 0;
+            padding: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        /* 页脚样式 */
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navbar ul {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .hero {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="#home">首页</a></li>
+            <li><a href="#about">关于</a></li>
+            <li><a href="#contact">联系</a></li>
+        </ul>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="container">
+        <section id="home" class="hero">
+            <h1>欢迎访问我的网页</h1>
+            <p>这是一个简单但功能齐全的网页示例，包含导航、内容和交互元素。</p>
+            <a href="#" class="button" onclick="showMessage()">点击了解更多</a>
+        </section>
+
+        <!-- NCM转换器部分 -->
+        <section id="ncm-converter" class="ncm-converter">
+            <h2>网易云音乐NCM转MP3</h2>
+            <p>上传您的NCM文件，转换为MP3格式！</p>
+            <!-- 这里嵌入ncmc-web的转换界面 -->
+            <div id="ncm-converter-app">
+                <!-- ncmc-web的HTML内容将插入这里 -->
+                <p>请上传NCM文件以开始转换</p>
+                <input type="file" id="ncm-file-input" accept=".ncm">
+                <button onclick="convertNcm()">转换</button>
+            </div>
+        </section>
+
+        <section id="about" style="margin-top: 2rem;">
+            <h2>关于我们</h2>
+            <p>这是一个示例网页，展示了HTML、CSS和JavaScript的基础功能。您可以通过导航栏访问不同部分，或者点击按钮体验交互效果。</p>
+        </section>
+
+        <section id="contact" style="margin-top: 2rem;">
+            <h2>联系我们</h2>
+            <p>有任何问题？请通过下方邮箱联系我们！</p>
+            <p>Email: example@domain.com</p>
+        </section>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <p>© 2025 简单网页示例。保留所有权利。</p>
+    </footer>
+
+    <script>
+        function showMessage() {
+            alert("感谢您的兴趣！这是一个简单的交互示例。");
+        }
+
+        // 假设ncmc-web的转换逻辑可以简化到一个函数
+        function convertNcm() {
+            alert("此功能需要ncmc-web的JavaScript代码。请从GitHub克隆ncmc-web并整合其转换逻辑。");
+            // 这里应包含ncmc-web的实际转换代码
+        }
+    </script>
+</body>
+</html>
